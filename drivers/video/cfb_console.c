@@ -142,6 +142,11 @@
 #define VIDEO_FB_16BPP_WORD_SWAP
 #endif
 
+#ifdef CONFIG_VIDEO_NX
+#define VIDEO_FB_LITTLE_ENDIAN
+#endif
+
+
 /*
  * Include video_fb.h after definitions of VIDEO_HW_RECTFILL etc.
  */
@@ -590,6 +595,7 @@ static void video_putchar(int xx, int yy, unsigned char c)
 {
 	video_drawchars(xx, yy + video_logo_height, &c, 1);
 }
+
 
 #if defined(CONFIG_VIDEO_SW_CURSOR)
 static void video_set_cursor(void)
@@ -2269,3 +2275,17 @@ int video_get_screen_columns(void)
 {
 	return CONSOLE_COLS;
 }
+
+#ifdef CONFIG_CMD_DISPLAY
+int display_putc(char c) {
+        parse_putc(c);
+	return 0;
+}
+#include <led-display.h>
+void display_set(int opt) {
+        if((opt & DISPLAY_CLEAR) > 0) {
+                console_clear();
+                console_cursor_set_position(0, 0);
+        }
+}
+#endif

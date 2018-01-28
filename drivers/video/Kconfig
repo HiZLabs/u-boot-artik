@@ -268,3 +268,15 @@ source "drivers/video/nexell/Kconfig"
 source "drivers/video/bridge/Kconfig"
 
 endmenu
+
+config CFB_CONSOLE
+        bool "Enable color framebuffer console"
+        depends on VIDEO
+        help
+           Color framebuffer console
+
+config CFB_CONSOLE_ANSI
+	bool "Enable ANSI codes on color framebuffer console"
+	depends on CFB_CONSOLE
+	help
+	  Pretty printing on console

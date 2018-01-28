@@ -5,6 +5,10 @@
  * SPDX-License-Identifier:      GPL-2.0+
  */
 
+#ifndef DEBUG
+#define DEBUG
+#endif
+
 #include <config.h>
 #include <common.h>
 #include <asm/io.h>
@@ -74,7 +78,7 @@ static void set_board_rev(u32 revision)
 #ifdef CONFIG_DISPLAY_BOARDINFO
 int checkboard(void)
 {
-	printf("\nBoard: ARTIK710 Raptor\n");
+	printf("\nBoard: Hi-Z Labs TT (ARTIK710 Raptor)\n");
 
 	return 0;
 }
@@ -128,7 +132,7 @@ static void get_sensorid(u32 revision)
 	}
 
 	if (!found_panel)
-		setenv("lcd_panel", "NONE");
+		setenv("lcd_panel", "nhd-50-800480tf-atxl");
 }
 #endif
 
@@ -166,9 +170,15 @@ int board_early_init_f(void)
 void board_display_reset(void)
 {
 	nx_gpio_set_pad_function(4, 3, 0);	/* E_3 : LVDS RESET */
+	nx_gpio_set_pad_function(0, 16, 0);	/* A_16 : TT display enable */
 	nx_gpio_set_output_enable(4, 3, 0);
+	/*nx_gpio_set_output_enable(0, 16, 0);*/
+	run_command("gpio clear 16", 0);
 	mdelay(1);
 	nx_gpio_set_output_enable(4, 3, 1);
+	/*nx_gpio_set_output_enable(0, 16, 1);*/
+	run_command("gpio set 16", 0);
+	printf("Reset display.\n");
 }
 #endif
 
@@ -308,6 +318,8 @@ void pmic_init(void)
 
 int board_late_init(void)
 {
+	run_command("setenv stdout serial", 0);
+        run_command("setenv stderr serial", 0);
 #ifdef CONFIG_DM_PMIC_NXE2000
 	pmic_init();
 #endif
@@ -326,6 +338,11 @@ int board_late_init(void)
 #ifdef CONFIG_ARTIK_OTA
 	check_ota_update();
 #endif
+
+	run_command("setenv stdout serial", 0);
+	run_command("setenv stderr serial", 0);
+	run_command("ext4load mmc 0:7 0x70000000 /root/HiZLabsTTbg.bmp", 0);
+	run_command("bmp display 0x70000000", 0);
 	return 0;
 }
 

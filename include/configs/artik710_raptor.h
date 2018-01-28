@@ -101,7 +101,7 @@
  *	U-Boot Environments
  */
 /* refer to common/env_common.c	*/
-#define CONFIG_BOOTDELAY			3
+#define CONFIG_BOOTDELAY			1
 
 /*-----------------------------------------------------------------------
  * Miscellaneous configurable options
@@ -109,7 +109,7 @@
 #ifdef CONFIG_SYS_PROMPT
 #undef CONFIG_SYS_PROMPT
 /* Monitor Command Prompt   */
-#define CONFIG_SYS_PROMPT			"artik710# "
+#define CONFIG_SYS_PROMPT			"tactouch# "
 #endif
 /* undef to save memory	   */
 #define CONFIG_SYS_LONGHELP
@@ -270,7 +270,7 @@
 #define CONFIG_G_DNL_THOR_PRODUCT_NUM	0x685D
 #define CONFIG_G_DNL_UMS_VENDOR_NUM	0x04e8
 #define CONFIG_G_DNL_UMS_PRODUCT_NUM	0x685C
-#define CONFIG_G_DNL_MANUFACTURER       "Samsung Electronics"
+#define CONFIG_G_DNL_MANUFACTURER       "Hi-Z Labs"
 
 /*-----------------------------------------------------------------------
  * Nexell USB Downloader
@@ -399,18 +399,21 @@
 	"bootdelay=" __stringify(CONFIG_BOOTDELAY) "\0"			\
 	"console=" CONFIG_DEFAULT_CONSOLE				\
 	"consoleon=setenv console=" CONFIG_DEFAULT_CONSOLE		\
-		"; saveenv; reset\0"					\
+		"; stdin=serial; stdout=serial; stderr=serial; saveenv; reset\0"					\
 	"consoleoff=setenv console=ram; saveenv; reset\0"		\
+	"stdin=serial\0"						\
+	"stdout=serial\0"						\
+	"stderr=serial\0"						\
 	"rootdev=" __stringify(CONFIG_ROOT_DEV) "\0"			\
 	"rootpart=" __stringify(CONFIG_ROOT_PART) "\0"			\
 	"bootpart=" __stringify(CONFIG_BOOT_PART) "\0"			\
 	"rescue=0\0"							\
 	"root_rw=rw\0"							\
-	"opts=loglevel=4\0"						\
+	"opts=loglevel=4 vt.global_cursor_default=0 consoleblank=0\0"	\
 	"rootfs_type=ext4\0"						\
-	"lcd1_0=s6e8fa0\0"						\
+	"lcd1_0=nhd-50-800480tf-atxl\0"						\
 	"lcd2_0=gst7d0038\0"						\
-	"lcd_panel=s6e8fa0\0"						\
+	"lcd_panel=nhd-50-800480tf-atxl\0"						\
 	"sdrecovery=run boot_cmd_sdboot;"				\
 		"sd_recovery mmc 1:3 48000000 partmap_emmc.txt\0"	\
 	"factory_load=factory_info load mmc 0 "				\
@@ -458,6 +461,18 @@
 		"setenv fdtfile s5p6818-artik710-explorer.dtb; "	\
 		"run mmcboot\0"						\
 	"hwtest_recoveryboot=run recovery_cmd; run hwtestboot\0"	\
-	"bootcmd=run ramfsboot\0"
+	"bootcmd=run ramfsboot\0"					\
+	"stdin=serial\0"						\
+	"stdout=serial\0"						\
+	"stderr=serial\0"
 
+/* Misc */
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_CMD_BMP
+#define CONFIG_CMD_DISPLAY
+#define CONFIG_VIDEO
+/* #define CONFIG_VIDEO_LOGO */
+/* #define CONFIG_VIDEO_BMP_LOGO */
+#define CONFIG_VGA_AS_SINGLE_DEVICE
+#define CONFIG_CFB_CONSOLE_ANSI
 #endif /* __CONFIG_H__ */
