@@ -41,7 +41,7 @@
 	};
 
 	ehci:usbhost@c0030000 {
-		//samsung,vbus-gpio = <&gpio_a 16 0>;
+		samsung,vbus-gpio = <&gpio_a 16 0>;
 		status = "okay";
 	};
 
@@ -207,52 +207,5 @@
 			regulator-boot-on = <1>;
 		};
 	}; /* voltage-regulators */
-};
-&dp0 {
-	status = "okay";
-	module = <0>;
-	lcd-type = "lvds";
-	dp-sync {
-		pixel_clock_hz = <30000000>;
-                h_active_len = <800>;
-                h_sync_width = <48>;
-                h_back_porch = <88>;
-                h_front_porch = <40>;
-                h_sync_invert = <1>;
-                v_active_len = <480>;
-                v_sync_width = <3>;
-                v_back_porch = <32>;
-                v_front_porch = <13>;
-                v_sync_invert = <1>;
-	};
-	dp-ctrl {
-		clk_src_lv0 	= <0>;
-		clk_div_lv0	= <16>;
-		clk_src_lv1	= <7>;
-		clk_div_lv1	= <1>;
-	};
-	dp-planes {
-		layer_top {
-			screen_width = <800>;
-			screen_height = <480>;
-			back_color = <0x000000>;
-			video_prior = <2>;
-		};
-		layer_0 {
-			fb_base = <0x41000000>;
-			left = <0>;
-			top = <0>;
-			width = <800>;
-			height = <480>;
-			pixel_byte = <3>;
-			format = <0x06530000>;
-		};
-	};
-        dp-device {    
-		format = <1>; 
-                lvds {  
-                        format = <1>;
-                };
-	};
 };
 
