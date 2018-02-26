@@ -10,8 +10,6 @@
 
 #include <env_callback.h>
 
-#include <env_mender.h>
-
 #ifdef DEFAULT_ENV_INSTANCE_EMBEDDED
 env_t environment __PPCENV__ = {
 	ENV_CRC,	/* CRC Sum */
@@ -24,7 +22,6 @@ static char default_environment[] = {
 #else
 const uchar default_environment[] = {
 #endif
-	MENDER_ENV_SETTINGS
 #ifdef	CONFIG_ENV_CALLBACK_LIST_DEFAULT
 	ENV_CALLBACK_VAR "=" CONFIG_ENV_CALLBACK_LIST_DEFAULT "\0"
 #endif
@@ -34,8 +31,8 @@ const uchar default_environment[] = {
 #ifdef	CONFIG_BOOTARGS
 	"bootargs="	CONFIG_BOOTARGS			"\0"
 #endif
-#ifdef	CONFIG_MENDER_BOOTCOMMAND
-	"bootcmd="	CONFIG_MENDER_BOOTCOMMAND	"\0"
+#ifdef	CONFIG_BOOTCOMMAND
+	"bootcmd="	CONFIG_BOOTCOMMAND		"\0"
 #endif
 #ifdef	CONFIG_RAMBOOTCOMMAND
 	"ramboot="	CONFIG_RAMBOOTCOMMAND		"\0"
