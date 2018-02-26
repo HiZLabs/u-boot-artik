@@ -194,6 +194,8 @@ static int update_sdcard_part_lists_make(const char *ptable_str,
 	for (i = 0; i < DEV_PART_MAX; i++, fp++) {
 		struct update_sdcard_fs_type *fs = f_part_fs;
 
+		//printf("Parsing: %s", p);
+
 		if (update_sdcard_parse_part_head(p, &p))
 			break;
 
@@ -231,6 +233,7 @@ static int update_sdcard_part_lists_make(const char *ptable_str,
 		strcpy(fp->file_name, str);
 
 		err = 0;
+		printf(".\n");
 	}
 
 	return err;
@@ -375,8 +378,8 @@ static int make_mmc_partition(struct update_sdcard_part *fp)
 	return 0;
 }
 
-static int update_sd_img_wirte(struct update_sdcard_part *fp,
-			       unsigned long addr, loff_t len)
+static int update_sd_img_write(struct update_sdcard_part *fp,
+			       unsigned long addr, loff_t offset, loff_t len)
 {
 	block_dev_desc_t *desc;
 	char cmd[128];
@@ -428,7 +431,8 @@ static int update_sd_img_wirte(struct update_sdcard_part *fp,
 
 		if (fs_type == UPDATE_SDCARD_FS_2NDBOOT ||
 		    fs_type == UPDATE_SDCARD_FS_BOOT ||
-		    fs_type == UPDATE_SDCARD_FS_ENV) {
+		    fs_type == UPDATE_SDCARD_FS_ENV ||
+		    fs_type == UPDATE_SDCARD_FS_RAW_PART) {
 			int blk_cnt = lldiv(length, 512);
 				if (length % 512)
 					blk_cnt++;
@@ -436,7 +440,7 @@ static int update_sd_img_wirte(struct update_sdcard_part *fp,
 			p = sprintf(cmd, "mmc write ");
 			l = sprintf(&cmd[p], "0x%x 0x%llx 0x%x",
 				    (unsigned int)addr,
-				    lldiv(start, 512),
+				    lldiv(start+offset, 512),
 				    blk_cnt);
 			p += l;
 			cmd[p] = 0;
@@ -459,8 +463,11 @@ static int sdcard_update(struct update_sdcard_part *fp, unsigned long addr,
 			 char *dev, int fs_type)
 {
 	unsigned long time;
+	unsigned long file_time;
 	int i = 0, len_read = 0, ret = 0, first_fs = 0;
 	loff_t len;
+	loff_t file_size;
+	loff_t bytes_written = 0;
 
 	for (i = 0; i < DEV_PART_MAX; i++, fp++) {
 		if (!strcmp(fp->device, ""))
@@ -474,32 +481,68 @@ static int sdcard_update(struct update_sdcard_part *fp, unsigned long addr,
 			return -1;
 		}
 
-		time = get_timer(0);
-		len_read = fs_read(fp->file_name, addr, 0, 0, &len);
-		time = get_timer(time);
-
-		printf("%lld bytes read in %lu ms", len, time);
-		if (time > 0) {
-			puts(" (");
-			print_size(lldiv(len, time) * 1000, "/s");
-			puts(")");
+		if(fs_type == FS_TYPE_FAT)
+			len_read = fat_size(fp->file_name, &file_size);
+		else
+			len_read = fs_size(fp->file_name, &file_size);
+		
+		if(len_read < 0) {
+			printf("Error reading file size for %s\n", fp->file_name);
+			continue;
 		}
-		puts("\n");
 
-		debug("%s.%d : %s : %s : 0x%llx, 0x%llx : %s\n", fp->device,
-		      fp->dev_no, fp->partition_name,
-		      UPDATE_SDCARD_FS_MASK&fp->fs_type ? "fs" : "img",
-		      fp->start, fp->length, fp->file_name);
-
+		printf("Copying %lld bytes from %s via 0x%lx\n", file_size, fp->file_name, addr);
 		if (first_fs == 0 && (fp->fs_type & UPDATE_SDCARD_FS_MASK)) {
 			first_fs = 1;
 			make_mmc_partition(fp);
 		}
 
-		if (len <= 0 || len_read < 0)
-			continue;
+		file_time = get_timer(0);
+		for(bytes_written = 0; bytes_written < file_size;) {
 
-		ret = update_sd_img_wirte(fp, addr, len);
+			time = get_timer(0);
+			if(fs_type == FS_TYPE_FAT)
+				len_read = fat_read_file(fp->file_name, addr, bytes_written, 1024*1024*128, &len);
+			else
+				len_read = fs_read(fp->file_name, addr, bytes_written, 1024*1024*128, &len);
+
+			if(len_read < 0) {
+				printf(" error reading %s @%lld\n", fp->file_name, bytes_written);
+				break;
+			}
+	
+
+			if (len <= 0 || len_read < 0)
+				break;
+
+			ret = update_sd_img_write(fp, addr, bytes_written, len);
+			bytes_written += len;
+			time = get_timer(time);
+			
+			printf(" %lld bytes copied in %lu ms", len, time);
+			if (time > 0) {
+				puts(" (");
+				print_size(lldiv(len, time) * 1000, "/s");
+				puts(")");
+			}
+			puts("\n");
+	
+			debug("%s.%d : %s : %s : 0x%llx, 0x%llx : %s\n", fp->device,
+			      fp->dev_no, fp->partition_name,
+			      UPDATE_SDCARD_FS_MASK&fp->fs_type ? "fs" : "img",
+			      fp->start + bytes_written, len, fp->file_name);
+
+			printf("Copying %s: %lld of %lld bytes written\n", fp->file_name, bytes_written, file_size);
+		}
+
+		file_time = get_timer(file_time);
+		printf(" %s total: %lld bytes copied in %lu ms", fp->file_name, file_size, file_time);
+                if (time > 0) {
+                        puts(" (");
+                        print_size(lldiv(file_size, file_time) * 1000, "/s");
+                        puts(")");
+                }
+		puts("\n");
 	}
 	return ret;
 }
